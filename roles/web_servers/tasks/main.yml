@@ -1,0 +1,108 @@
+---
+#Elastic stack
+ - name: add ELK gpg key
+   tags: ubuntu
+   apt_key:
+     url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+     state: present
+   when: ansible_distribution == "Ubuntu" 
+
+ - name: Add ElasticSearch to repository
+   tags: ubuntu
+   apt_repository:
+     repo: "deb https://artifacts.elastic.co/packages/7.x/apt stable main"
+   when: ansible_distribution == "Ubuntu"
+
+ - name: Configure ElasticSearch
+   blockinfile:
+     path: /etc/elasticsearch/elasticsearch.yml
+     block: |
+       #configuring elastic search
+       
+       cluster.name: my-cluster
+       node.name: dev-node-1
+       network.host: 0.0.0.0
+       http.port: 9200
+       discovery.type: single-node
+       path.data: /var/lib/elasticsearch
+       path.logs: /var/log/elasticsearch
+       bootstrap.memory_lock: true
+     state: present
+     create: yes
+
+ - name: Install ElasticSearch, Kibana, & LogStash in Ubuntu
+   tags: ubuntu
+   package:
+     name: 
+       - elasticsearch
+       - kibana
+       - logstash
+     state: latest
+
+ - name: Enable ElasticSearch, Kibana, & LogStash Service
+   vars:
+     elastic_services:
+       - elasticsearch
+       - kibana
+       - logstash
+   service:
+      name: "{{ item }}"
+      enabled: yes
+      state: started
+   loop: "{{ elastic_services }}"
+
+#Nagios
+
+ - name: Install Nagios in Ubuntu
+   apt:
+     name: nagios3-core
+     state: latest
+   when: ansible_distribution == "Ubuntu"
+
+ - name: start Nagios Service
+   service:
+     name: nagios3
+     state: restarted
+     enabled: true
+   when: ansible_distribution == "Ubuntu"
+
+ - name: install nagios requisites
+   apt:
+    name: 
+     - libpng-dev
+     - gcc
+     - apache2
+     - libfreetype6-dev
+     - libgd-dev
+     - libc6-dev
+    state: latest
+   when: ansible_distribution == "Ubuntu" 
+
+ - name: install LAMP stack in ubuntu
+   apt:
+    name:
+     - apache2
+     - mariadb-server
+     - php
+
+ - name: Add Grafana gpg key
+   tags: ubuntu
+   apt_key:
+     url: https://apt.grafana.com/gpg.key
+     state: present
+   when: ansible_distribution == "Ubuntu"
+
+ - name: Add Grafana to apt repository
+   tags: ubuntu
+   apt_repository:
+     repo: "deb https://apt.grafana.com stable main"
+   when: ansible_distribution == "Ubuntu"
+
+ - name: Install Grafana, Prometheus, and InfluxDB
+   package:
+     name: 
+       - grafana
+       - prometheus
+       - influxdb
+     state: latest
+

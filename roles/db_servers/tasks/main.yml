@@ -1,0 +1,50 @@
+---
+#Elastic stack
+ - name: Install ElasticSearch to repository (CentOS)
+   yum_repository:
+     name: elasticsearch
+     description: ElasticSearch Repository
+     baseurl: https://artifacts.elastic.co/packages/7.x/yum
+     gpgcheck: yes
+     gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+     enabled: yes
+   when: ansible_distribution == "CentOS"
+
+ - name: Configure ElasticSearch
+   blockinfile:
+     path: /etc/elasticsearch/elasticsearch.yml
+     block: |
+       #configuring Elastic Stack
+       
+       cluster.name: my-cluster
+       node.name: dev-node-1
+       network.host: 0.0.0.0
+       http.port: 9200
+       discovery.type: single-node
+       path.data: /var/lib/elasticsearch
+       path.logs: /var/log/elasticsearch
+       bootstrap.memory_lock: true
+     state: present
+     create: yes
+
+ - name: Install ElasticSearch, Kibana, & LogStash in Ubuntu
+   tags: ubuntu
+   package:
+     name: 
+       - elasticsearch
+       - kibana
+       - logstash
+     state: latest
+
+ - name: Enable ElasticSearch, Kibana, & LogStash Service
+   vars:
+     elastic_services:
+       - elasticsearch
+       - kibana
+       - logstash
+   service:
+      name: "{{ item }}"
+      enabled: yes
+      state: started
+   loop: "{{ elastic_services }}"
+
